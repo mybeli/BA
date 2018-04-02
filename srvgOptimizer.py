@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar 27 23:34:36 2018
-
-@author: mybeli161
-"""
-
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import state_ops
 from tensorflow.python.ops import control_flow_ops
@@ -35,6 +27,7 @@ class SVRG(Optimizer):
         tilde_napla = self.get_slot(var, "tilde_napla")
         x = self.get_slot(var, "x")
     
+        #HERE TODO    
         tilde_napla_update =  tf.+ grad
         x_update = x - self.learning_rate*tilde_napla_update
         
