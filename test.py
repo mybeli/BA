@@ -1,26 +1,45 @@
+# Copyright 2015 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+# Modifications copyright (C) 2017 Francesco Orabona, Tatiana Tommasi 
+
+"""A fully connected MNIST classifier using convolutional layers.
+
+See extensive documentation at
+https://www.tensorflow.org/get_started/mnist/pros
+"""
+# Disable linter warnings to maintain consistency with tutorial.
+# pylint: disable=invalid-name
+# pylint: disable=g-bad-import-order
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import gzip
-import os
-import tempfile
-
-import numpy
-from six.moves import urllib
-from six.moves import xrange  # pylint: disable=redefined-builtin
-import tensorflow as tf
-from tensorflow.contrib.learn.python.learn.datasets.mnist import read_data_sets
-
 import argparse
 import sys
 
-import svrg_optimizer
-import svrg_flow
+import input_data
 
 import tensorflow as tf
 import numpy as np
 
+sys.path.insert(0, '../optimizer/')
+
+
+import svrg_optimizer
 
 FLAGS = None
 
@@ -39,8 +58,8 @@ def bias_variable(shape):
 
 def main(_):
   # Import data
-  mnist = read_data_sets('data', one_hot=True, validation_size=0)
-
+  mnist = input_data.read_data_sets('data', one_hot=True, validation_size=0)
+  
   # Create the model
   x = tf.placeholder(tf.float32, [None, 784])
 
@@ -60,7 +79,8 @@ def main(_):
   out = tf.matmul(h_fc2, W_fc3) + b_fc3
   
   cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=out))
-  train_step = svrg_flow.SVRG().minimize(cross_entropy)
+  
+  train_step = svrg_optimizer.SVRG(0.1, 10).minimize(cross_entropy)
   correct_prediction = tf.equal(tf.argmax(out, 1), tf.argmax(y_, 1))
   accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
