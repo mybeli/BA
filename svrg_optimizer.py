@@ -4,6 +4,7 @@ from tensorflow.python.ops import control_flow_ops
 from tensorflow.python.framework import constant_op
 from tensorflow.python.training.optimizer import Optimizer
 import tensorflow as tf
+import numpy as np
 
 import input_data
 import test
@@ -55,18 +56,22 @@ class SVRG(Optimizer):
       
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=out))
         
-        grad_w1, grad_w2, grad_w3, bias_1, bias_2, bias_3 = tf.gradients(xs = [W_fc1, W_fc2, W_fc3, b_fc1, b_fc2, b_fc3] , ys = cross_entropy)
+        #grad_all = tf.gradients(ys = [W_fc1, W_fc2, W_fc3, b_fc1, b_fc2, b_fc3] , xs = cross_entropy)
+        grad_ = tf.gradients(ys = [W_fc1, W_fc2, W_fc3, b_fc1, b_fc2, b_fc3] , xs = cross_entropy)
+        init = tf.global_variables_initializer()
         
-        init = tf.global_variables_initializer
-        
-        with tf.Session as sess:
+        with tf.Session() as sess:
             sess.run(init)
             input_x, output_y = mnist.train.next_batch(1)
-            grad = sess.run([grad_w1, grad_w2, grad_w3, bias_1, bias_2, bias_3,cross_entropy], feed_dict={x: input_x, y: output_y})
-            
-       
-        return grad.eval(var)
-                
+            #feedy = sess.run(cross_entropy, feed_dict={x: input_x, y: output_y})
+            #grad = (sess.run(grad_all, feed_dict={x: input_x, y: output_y}))
+            #grad_ = tf.gradients(ys = [W_fc1, W_fc2, W_fc3, b_fc1, b_fc2, b_fc3] , xs = cross_entropy)
+            #grad = grad_.eval(grad_, feed_dict={[W_fc1, W_fc2, W_fc3, b_fc1, b_fc2, b_fc3]:var})
+            #grad = sess.run(grad_,feed_dict={[W_fc1, W_fc2, W_fc3, b_fc1, b_fc2, b_fc3]:var} )
+            #[W_fc1, W_fc2, W_fc3, b_fc1, b_fc2, b_fc3] = var
+            var_grad_val = sess.run(grad_,feed_dict={x: input_x, y: output_y} )
+        return var_grad_val
+    
     def _apply_dense(self, grad, var):
         
         var_temp = self.get_slot(var, "var_temp")
@@ -76,9 +81,14 @@ class SVRG(Optimizer):
         for i in range(self.iter_per_epoch):
             grad2 = self.compute_gradient(var_temp)
             grad1 = self.compute_gradient(var)
-            var_temp = grad2 - grad1 + grad 
+            grad_temp_ = np.subtract(grad2,grad1) 
+            grad_temp = np.add(grad_temp_, grad)
+            
+            var = var - self.learning_rate * grad_temp
         
-        return (var_temp)
+        
+        
+        return (var)
 
     def _apply_sparse(self, grad, var):
         return self._apply_dense(grad, var)
